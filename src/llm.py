@@ -1,6 +1,8 @@
 import google.generativeai as genai
+import asyncio
+from google.api_core import exceptions
 from src.auth import AuthManager
-from src.config.settings import GEMINI_MODEL, GEMINI_API_KEY
+from src.config.settings import GEMINI_MODEL, GEMINI_API_KEY, OAUTH_CLIENT_ID, OAUTH_CLIENT_SECRET, OAUTH_SCOPES
 from src.skills.registry import SkillRegistry
 import src.skills.default  # noqa: F401 # Ensure default skills are registered
 
@@ -24,19 +26,29 @@ class GeminiBrain:
         tools = list(self.registry.get_skills().values())
         self.model = genai.GenerativeModel(GEMINI_MODEL, tools=tools)
 
-    async def generate_response(self, prompt, system_instruction=None):
-        """Generate a response, handling any tool calls along the way."""
+    async def generate_response(self, prompt, system_instruction=None, retries=3):
+        """Generate a response, handling any tool calls along the way with retry logic."""
         if not self.model:
             self.initialize()
         
-        chat = self.model.start_chat(enable_automatic_function_calling=True)
-        
-        # We include the system instruction as a message if provided, 
-        # as gemini-2.0-flash-exp and others handle it well this way or via system_instruction param.
-        # For simplicity in this implementation, we prepend it to the prompt.
-        full_prompt = prompt
-        if system_instruction:
-            full_prompt = f"{system_instruction}\n\nUSER INPUT: {prompt}"
+        for attempt in range(retries):
+            try:
+                chat = self.model.start_chat(enable_automatic_function_calling=True)
+                
+                full_prompt = prompt
+                if system_instruction:
+                    full_prompt = f"{system_instruction}\n\nUSER INPUT: {prompt}"
 
-        response = await chat.send_message_async(full_prompt)
-        return response.text
+                response = await chat.send_message_async(full_prompt)
+                return response.text
+            except exceptions.ResourceExhausted as e:
+                wait_time = (attempt + 1) * 10
+                if attempt < retries - 1:
+                    print(f"Quota exceeded. Retrying in {wait_time}s... ({e.message})")
+                    await asyncio.sleep(wait_time)
+                else:
+                    return f"Error: Quota exceeded after {retries} attempts. Please try again later."
+            except Exception as e:
+                return f"An unexpected error occurred: {str(e)}"
+        
+        return "Error: Failed to generate response."

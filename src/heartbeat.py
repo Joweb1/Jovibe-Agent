@@ -41,6 +41,10 @@ If nothing needs attention right now, reply ONLY with 'HEARTBEAT_OK'.
 """
         response = await self.brain.generate_response(prompt)
         
+        if response.startswith("Error:"):
+            print(f"Heartbeat pulse failed: {response}")
+            return
+
         if "HEARTBEAT_OK" in response:
             print("Heartbeat: Everything is fine.")
         else:
