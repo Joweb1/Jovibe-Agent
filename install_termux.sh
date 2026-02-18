@@ -12,16 +12,19 @@ fi
 echo "Updating packages..."
 pkg update -y && pkg upgrade -y
 echo "Installing essential build tools and libraries..."
-pkg install python python-pip termux-api clang make python-dev libffi libffi-dev openssl openssl-dev rust binutils -y
+# In Termux, the base package (e.g., libffi) usually includes development headers.
+# There are no separate -dev packages like in Ubuntu.
+pkg install python termux-api clang make libffi openssl rust binutils -y
 
 # Optional but RECOMMENDED: Install TUR repo for pre-compiled binaries
-# This avoids hours of compilation for things like grpcio and psutil
 echo "Checking for Termux User Repository (TUR)..."
 pkg install tur-repo -y
+pkg update -y
 
-# Try to install complex dependencies via pkg if available (faster and more reliable)
-echo "Installing complex dependencies via pkg..."
-pkg install python-grpcio python-psutil python-cryptography -y || echo "Package-level dependencies not found, will attempt pip installation."
+# Try to install complex dependencies via pkg/TUR if available
+echo "Attempting to install complex dependencies via pkg (TUR)..."
+# In TUR, names are usually like 'python-grpcio', 'python-psutil'
+pkg install python-grpcio python-psutil python-cryptography -y || echo "Note: Some pre-compiled packages not found in TUR, will attempt pip installation."
 
 # 2. Setup JOVIBE_HOME
 JOVIBE_HOME="$HOME/.jovibe"
