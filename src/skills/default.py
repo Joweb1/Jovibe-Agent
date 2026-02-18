@@ -3,12 +3,11 @@ import subprocess
 import aiohttp
 from datetime import datetime
 from src.skills.registry import SkillRegistry
-from src.config.settings import BASE_DIR
+from src.config.settings import BASE_DIR, STORAGE_DIR, USER_FILE
 from src.memory.db import Session, Interaction
 
 import re
 import glob
-from pathlib import Path
 
 @SkillRegistry.register("glob_files")
 def glob_files(pattern: str):
@@ -154,7 +153,7 @@ def manage_todos(action: str, task: str = ""):
                 return "No TODOs found."
             with open(todo_file, "r") as f:
                 lines = f.readlines()
-            new_lines = [l for l in lines if task.lower() not in l.lower()]
+            new_lines = [line for line in lines if task.lower() not in line.lower()]
             with open(todo_file, "w") as f:
                 f.writelines(new_lines)
             return f"Removed tasks matching: {task}"

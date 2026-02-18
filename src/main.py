@@ -1,10 +1,8 @@
 import asyncio
-import os
 from src.llm import GeminiBrain
 from src.memory.manager import SoulManager
 from src.heartbeat import HeartbeatManager
 from src.adapters.telegram_adapter import TelegramAdapter
-from src.memory.db import init_db
 
 async def main():
     print("Starting Jovibe Agent...")

@@ -1,5 +1,4 @@
 import os
-import json
 from src.config.settings import SOUL_FILE, USER_FILE
 from src.memory.db import Session, Interaction, init_db
 
