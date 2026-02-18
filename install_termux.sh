@@ -21,10 +21,10 @@ echo "Checking for Termux User Repository (TUR)..."
 pkg install tur-repo -y
 pkg update -y
 
-# Try to install complex dependencies via pkg/TUR if available
-echo "Attempting to install complex dependencies via pkg (TUR)..."
-# In TUR, names are usually like 'python-grpcio', 'python-psutil'
-pkg install python-grpcio python-psutil python-cryptography -y || echo "Note: Some pre-compiled packages not found in TUR, will attempt pip installation."
+# Try to install complex dependencies via pkg (faster and more reliable)
+echo "Installing pre-compiled dependencies (grpcio, cryptography) via pkg..."
+# python-psutil seems unavailable as a pkg, but having clang/make/python headers will let pip build it.
+pkg install python-grpcio python-cryptography -y || echo "Note: Pre-compiled packages not found, will attempt pip installation."
 
 # 2. Setup JOVIBE_HOME
 JOVIBE_HOME="$HOME/.jovibe"
