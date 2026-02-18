@@ -1,5 +1,4 @@
 import pytest
-import google.generativeai as genai
 from unittest.mock import MagicMock, AsyncMock
 from src.llm import GeminiBrain
 

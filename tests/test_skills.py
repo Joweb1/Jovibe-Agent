@@ -1,4 +1,3 @@
-import pytest
 from src.skills.registry import SkillRegistry
 
 def test_skill_registration():

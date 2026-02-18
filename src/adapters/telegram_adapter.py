@@ -1,6 +1,6 @@
 import asyncio
 from telegram import Update
-from telegram.ext import ApplicationBuilder, ContextTypes, CommandHandler, MessageHandler, filters
+from telegram.ext import ApplicationBuilder, ContextTypes, MessageHandler, filters
 from src.adapters.base import BaseAdapter
 from src.config.settings import TELEGRAM_TOKEN
 

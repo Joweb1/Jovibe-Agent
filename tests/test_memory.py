@@ -1,13 +1,6 @@
-import os
-import pytest
 from src.memory.manager import SoulManager
-from src.config.settings import SOUL_FILE, USER_FILE
 
 def test_soul_manager_system_prompt_default(tmp_path):
-    # Mocking files
-    soul_file = tmp_path / "soul.md"
-    user_file = tmp_path / "user.md"
-    
     # We need to monkeypatch the settings or just let it use defaults if files don't exist
     manager = SoulManager()
     prompt = manager.get_system_prompt()
