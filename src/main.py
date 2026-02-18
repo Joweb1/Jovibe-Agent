@@ -30,5 +30,4 @@ if __name__ == "__main__":
     try:
         asyncio.run(main())
     except KeyboardInterrupt:
-        print("
-Jovibe Agent shutting down.")
+        print("\nJovibe Agent shutting down.")

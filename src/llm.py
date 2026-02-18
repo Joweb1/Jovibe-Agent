@@ -2,7 +2,7 @@ import google.generativeai as genai
 from src.auth import AuthManager
 from src.config.settings import GEMINI_MODEL, GEMINI_API_KEY
 from src.skills.registry import SkillRegistry
-import src.skills.default  # Ensure default skills are registered
+import src.skills.default  # noqa: F401 # Ensure default skills are registered
 
 class GeminiBrain:
     def __init__(self):

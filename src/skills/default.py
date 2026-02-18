@@ -30,7 +30,8 @@ def grep_search(pattern: str, file_pattern: str = "**/*.*"):
         regex = re.compile(pattern)
         
         for file_path in files:
-            if os.path.isdir(file_path): continue
+            if os.path.isdir(file_path):
+                continue
             try:
                 with open(file_path, "r", errors="ignore") as f:
                     for i, line in enumerate(f):
@@ -138,8 +139,10 @@ def manage_todos(action: str, task: str = ""):
     todo_file = BASE_DIR / "TODO.md"
     try:
         if action == "list":
-            if not os.path.exists(todo_file): return "No TODOs found."
-            with open(todo_file, "r") as f: return f.read()
+            if not os.path.exists(todo_file):
+                return "No TODOs found."
+            with open(todo_file, "r") as f:
+                return f.read()
         
         elif action == "add":
             with open(todo_file, "a") as f:
@@ -147,11 +150,12 @@ def manage_todos(action: str, task: str = ""):
             return f"Task added: {task}"
         
         elif action == "remove":
-            if not os.path.exists(todo_file): return "No TODOs found."
+            if not os.path.exists(todo_file):
+                return "No TODOs found."
             with open(todo_file, "r") as f:
                 lines = f.readlines()
             new_lines = [l for l in lines if task.lower() not in l.lower()]
-            with os.open(todo_file, "w") as f:
+            with open(todo_file, "w") as f:
                 f.writelines(new_lines)
             return f"Removed tasks matching: {task}"
             
@@ -244,8 +248,7 @@ def list_project_files(directory: str = "."):
     
     try:
         items = os.listdir(full_path)
-        return "
-".join(items)
+        return "\n".join(items)
     except Exception as e:
         return f"Error listing directory: {str(e)}"
 
@@ -265,8 +268,7 @@ def search_memory(query: str, limit: int = 5):
         formatted = []
         for r in results:
             formatted.append(f"[{r.timestamp}] {r.channel} - User: {r.prompt} | AI: {r.response[:100]}...")
-        return "
-".join(formatted)
+        return "\n".join(formatted)
     finally:
         session.close()
 
@@ -279,7 +281,6 @@ def execute_shell_command(command: str):
     try:
         result = subprocess.run(command, shell=True, capture_output=True, text=True, timeout=10)
         output = result.stdout if result.returncode == 0 else result.stderr
-        return f"Exit Code: {result.returncode}
-Output: {output}"
+        return f"Exit Code: {result.returncode}\nOutput: {output}"
     except Exception as e:
         return f"Error executing command: {str(e)}"

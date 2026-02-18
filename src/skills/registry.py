@@ -1,5 +1,4 @@
 import inspect
-import functools
 from typing import Any, Callable, Dict, List, Optional
 
 class SkillRegistry:
@@ -38,12 +37,16 @@ class SkillRegistry:
             required = []
             
             for param_name, param in params.items():
-                if param_name == "self": continue
+                if param_name == "self":
+                    continue
                 
                 param_type = "string"
-                if param.annotation == int: param_type = "integer"
-                elif param.annotation == float: param_type = "number"
-                elif param.annotation == bool: param_type = "boolean"
+                if param.annotation is int:
+                    param_type = "integer"
+                elif param.annotation is float:
+                    param_type = "number"
+                elif param.annotation is bool:
+                    param_type = "boolean"
                 
                 properties[param_name] = {
                     "type": param_type,

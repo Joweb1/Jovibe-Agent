@@ -45,6 +45,4 @@ class SoulManager:
 
     def get_recent_history(self, user_id, limit=5):
         history = self.session.query(Interaction).filter_by(user_id=user_id).order_by(Interaction.timestamp.desc()).limit(limit).all()
-        return "
-".join([f"User: {i.prompt}
-AI: {i.response}" for i in reversed(history)])
+        return "\n".join([f"User: {i.prompt}\nAI: {i.response}" for i in reversed(history)])
