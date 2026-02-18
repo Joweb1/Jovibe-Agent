@@ -38,7 +38,22 @@ chmod +x install_termux.sh
 ./install_termux.sh
 ```
 
-### **Standard Linux/macOS**
+### **Linux (Ubuntu / Debian)**
+```bash
+git clone https://github.com/Joweb1/Jovibe-Agent.git
+cd Jovibe-Agent
+chmod +x install_linux.sh
+./install_linux.sh
+```
+
+### **Windows (PowerShell)**
+```powershell
+git clone https://github.com/Joweb1/Jovibe-Agent.git
+cd Jovibe-Agent
+.\install_windows.ps1
+```
+
+### **Manual Installation (Any OS)**
 ```bash
 pip install .
 ```
