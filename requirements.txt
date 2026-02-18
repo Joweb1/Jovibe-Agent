@@ -11,3 +11,7 @@ schedule
 psutil
 beautifulsoup4
 glob2
+pytest
+pytest-asyncio
+pytest-mock
+ruff

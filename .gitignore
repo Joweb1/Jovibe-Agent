@@ -1,1 +1,6 @@
-.env\nstorage/\n__pycache__/\n*.sqlite
+.env
+storage/
+__pycache__/
+*.sqlite
+.pytest_cache/
+*.pyc
