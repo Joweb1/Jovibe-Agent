@@ -1,0 +1,34 @@
+import asyncio
+import os
+from src.llm import GeminiBrain
+from src.memory.manager import SoulManager
+from src.heartbeat import HeartbeatManager
+from src.adapters.telegram_adapter import TelegramAdapter
+from src.memory.db import init_db
+
+async def main():
+    print("Starting Jovibe Agent...")
+    
+    # Initialize components
+    brain = GeminiBrain()
+    brain.initialize()
+    
+    soul = SoulManager()
+    
+    heartbeat = HeartbeatManager(brain, soul)
+    telegram = TelegramAdapter(brain, soul)
+    
+    # Run all components concurrently
+    print("Launching core services...")
+    await asyncio.gather(
+        heartbeat.start(),
+        telegram.run(),
+        # discord.run(),
+    )
+
+if __name__ == "__main__":
+    try:
+        asyncio.run(main())
+    except KeyboardInterrupt:
+        print("
+Jovibe Agent shutting down.")
