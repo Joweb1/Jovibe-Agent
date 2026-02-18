@@ -1,0 +1,25 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "jovibe-agent"
+version = "1.0.0"
+description = "A modular AI agent with proactive and reactive capabilities."
+requires-python = ">=3.9"
+dependencies = [
+    "google-generativeai",
+    "python-telegram-bot",
+    "sqlalchemy",
+    "aiohttp",
+    "python-dotenv",
+    "psutil",
+    "google-auth-oauthlib",
+]
+
+[project.scripts]
+jovibe = "src.main:run"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["src*"]

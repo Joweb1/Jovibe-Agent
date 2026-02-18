@@ -24,8 +24,11 @@ async def main():
         # discord.run(),
     )
 
-if __name__ == "__main__":
+def run():
     try:
         asyncio.run(main())
     except KeyboardInterrupt:
         print("\nJovibe Agent shutting down.")
+
+if __name__ == "__main__":
+    run()
