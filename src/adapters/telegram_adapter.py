@@ -10,7 +10,7 @@ class TelegramAdapter(BaseAdapter):
             print("Telegram token not set. Skipping Telegram adapter.")
             return
 
-        application = ApplicationBuilder().token(TELEGRAM_TOKEN).build()
+        application = ApplicationBuilder().token(TELEGRAM_TOKEN).connect_timeout(30).read_timeout(30).write_timeout(30).build()
         
         # Add handlers
         msg_handler = MessageHandler(filters.TEXT & (~filters.COMMAND), self._on_message)
