@@ -46,7 +46,7 @@ load_dotenv(JOVIBE_HOME / ".env")
 load_dotenv()
 
 # Gemini Config
-GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-2.0-flash")
+GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-3-flash-preview")
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 
 # OAuth Constants (Ported from Gemini CLI)
@@ -56,6 +56,7 @@ OAUTH_SCOPES = [
     "https://www.googleapis.com/auth/cloud-platform",
     "https://www.googleapis.com/auth/userinfo.email",
     "https://www.googleapis.com/auth/userinfo.profile",
+    "openid",
 ]
 
 # Channel Config

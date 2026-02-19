@@ -19,10 +19,11 @@ class BaseAdapter(ABC):
 
     async def handle_message(self, channel, user_id, text):
         """Common logic for handling messages from any channel."""
-        system_prompt = self.soul.get_system_prompt()
-        history = self.soul.get_recent_history(user_id)
-        
-        prompt = f"""
+        try:
+            system_prompt = self.soul.get_system_prompt()
+            history = self.soul.get_recent_history(user_id)
+            
+            prompt = f"""
 {system_prompt}
 
 # RECENT CONTEXT
@@ -31,18 +32,25 @@ class BaseAdapter(ABC):
 # INCOMING MESSAGE ({channel})
 User: {text}
 """
-        response = await self.brain.generate_response(prompt)
-        
-        # Check if the agent wants to ask a question (STOP_AND_ASK pattern)
-        if "STOP_AND_ASK:" in response:
-            clean_question = response.split("STOP_AND_ASK:")[1].strip()
-            # Log the question as the response
-            self.soul.log_interaction(channel, user_id, text, f"[ASKED USER]: {clean_question}")
-            await self.send_message(user_id, clean_question)
-            return
+            response = await self.brain.generate_response(prompt)
+            
+            # Check if the agent wants to ask a question (STOP_AND_ASK pattern)
+            if "STOP_AND_ASK:" in response:
+                clean_question = response.split("STOP_AND_ASK:")[1].strip()
+                # Log the question as the response
+                self.soul.log_interaction(channel, user_id, text, f"[ASKED USER]: {clean_question}")
+                await self.send_message(user_id, clean_question)
+                return
 
-        # Log interaction
-        self.soul.log_interaction(channel, user_id, text, response)
-        
-        # Send response back to the platform
-        await self.send_message(user_id, response)
+            # Log interaction
+            self.soul.log_interaction(channel, user_id, text, response)
+            
+            # Send response back to the platform
+            await self.send_message(user_id, response)
+        except Exception as e:
+            error_msg = f"Sorry, I encountered an internal error: {str(e)}"
+            print(f"Error handling message from {user_id}: {e}")
+            try:
+                await self.send_message(user_id, error_msg)
+            except:
+                pass # Already logged or network is dead

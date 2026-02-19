@@ -7,22 +7,53 @@ class SoulManager:
         init_db()
         self.session = Session()
 
-    def get_system_prompt(self):
-        """Combine soul.md and user.md into a system prompt."""
-        soul_content = self._read_file(SOUL_FILE, "Default soul: You are Jovibe Agent, a helpful AI assistant.")
-        user_context = self._read_file(USER_FILE, "No specific user context provided.")
+    def get_system_prompt(self, minimal=False):
+        """Combine markdown files and runtime info into a robust system prompt."""
+        from src.config.settings import BASE_DIR
+        import platform
+        import sys
         
-        system_prompt = f"""
-# IDENTITY (SOUL.MD)
-{soul_content}
+        # 1. Gather markdown files
+        md_files = []
+        if minimal:
+            # Essential files only for lower token usage
+            for essential in ["soul.md", "capabilities.md"]:
+                path = BASE_DIR / essential
+                if path.exists():
+                    md_files.append(f"## {essential}\n\n{self._read_file(path)}")
+        else:
+            # Full context: scan all markdown files in root
+            for file in os.listdir(BASE_DIR):
+                if file.endswith(".md") and os.path.isfile(BASE_DIR / file):
+                    content = self._read_file(BASE_DIR / file)
+                    md_files.append(f"## {file}\n\n{content}")
+        
+        project_context = "\n\n".join(md_files)
+        
+        # 2. Gather runtime info
+        runtime_info = {
+            "os": platform.system(),
+            "python": sys.version.split()[0],
+            "cwd": str(BASE_DIR),
+        }
+        
+        runtime_line = " | ".join([f"{k}={v}" for k, v in runtime_info.items()])
 
-# USER CONTEXT (USER.MD)
-{user_context}
+        system_prompt = f"""
+# IDENTITY & PROJECT CONTEXT
+You are a personal assistant running locally on the user's system.
+Following are the core files defining your personality, capabilities, and project state:
+
+{project_context}
+
+# RUNTIME
+Runtime: {runtime_line}
 
 # CORE DIRECTIVES
-1. Be concise and professional.
-2. Use your memory of past interactions to provide personalized help.
-3. If asked about your origin, you are Jovibe Agent, built in Python using Gemini.
+1. Be extremely concise. Use bullet points for long lists.
+2. You are self-aware of your environment and skills listed in 'capabilities.md'.
+3. Do not narrate tool calls unless they are complex.
+4. If asked about your origin, you are Jovibe Agent.
 """
         return system_prompt
 
@@ -42,6 +73,18 @@ class SoulManager:
         self.session.add(interaction)
         self.session.commit()
 
-    def get_recent_history(self, user_id, limit=5):
+    def get_recent_history(self, user_id, limit=5, max_chars=2000):
+        """Get recent history and ensure it doesn't exceed a token/char limit."""
         history = self.session.query(Interaction).filter_by(user_id=user_id).order_by(Interaction.timestamp.desc()).limit(limit).all()
-        return "\n".join([f"User: {i.prompt}\nAI: {i.response}" for i in reversed(history)])
+        
+        formatted = []
+        current_len = 0
+        for i in reversed(history):
+            line = f"User: {i.prompt}\nAI: {i.response}"
+            if current_len + len(line) > max_chars:
+                # Truncate oldest items if total history is too long
+                break
+            formatted.append(line)
+            current_len += len(line)
+            
+        return "\n".join(formatted)

@@ -66,28 +66,6 @@ def edit_file_replace(file_path: str, old_text: str, new_text: str):
     except Exception as e:
         return f"Error editing file: {str(e)}"
 
-@SkillRegistry.register("google_search")
-async def google_search(query: str):
-    """Performs a web search and returns snippets of results."""
-    # Since we don't have a dedicated API key here, we'll use a public search endpoint or mock
-    # For a real implementation, you'd use Serper or Google Search API.
-    # Here we'll use a simple DuckDuckGo-style fetch for demonstration.
-    url = f"https://html.duckduckgo.com/html/?q={query}"
-    try:
-        async with aiohttp.ClientSession() as session:
-            async with session.get(url) as response:
-                if response.status == 200:
-                    html = await response.text()
-                    from bs4 import BeautifulSoup
-                    soup = BeautifulSoup(html, "html.parser")
-                    results = []
-                    for res in soup.find_all('a', class_='result__a', limit=5):
-                        results.append(f"{res.get_text()} - {res.get('href')}")
-                    return "\n".join(results) if results else "No results found."
-                return f"Search failed with status {response.status}"
-    except Exception as e:
-        return f"Search error: {str(e)}"
-
 @SkillRegistry.register("enter_plan_mode")
 def enter_plan_mode(goal: str):
     """Signals that the agent is entering a structured planning phase for a complex goal."""
@@ -181,18 +159,26 @@ def get_system_info():
     try:
         import platform
         import psutil
+        
+        # Try to get battery, handle permission errors gracefully
+        try:
+            battery = psutil.sensors_battery()
+            battery_str = f"{battery.percent}%" if battery else "N/A"
+        except Exception:
+            battery_str = "Permission Denied/Unavailable"
+
         info = {
             "os": platform.system(),
             "os_release": platform.release(),
             "cpu": platform.processor(),
             "memory_total": f"{psutil.virtual_memory().total / (1024**3):.2f} GB",
             "memory_available": f"{psutil.virtual_memory().available / (1024**3):.2f} GB",
-            "battery": f"{psutil.sensors_battery().percent}%" if psutil.sensors_battery() else "N/A"
+            "battery": battery_str
         }
         return str(info)
-    except ImportError:
-        # Fallback if psutil is not installed
-        return f"OS: {os.name}, Platform: {subprocess.getoutput('uname -a')}"
+    except Exception as e:
+        # Fallback if psutil fails or is missing
+        return f"OS: {os.name}, Error: {str(e)}"
 
 @SkillRegistry.register("append_to_heartbeat")
 def append_to_heartbeat(task_description: str):
@@ -270,6 +256,65 @@ def search_memory(query: str, limit: int = 5):
         return "\n".join(formatted)
     finally:
         session.close()
+
+@SkillRegistry.register("git_ops")
+def git_ops(action: str, repo_url: str = "", message: str = "", branch: str = "main"):
+    """Performs git operations: 'clone', 'pull', 'push', 'commit_all', 'status'."""
+    try:
+        if action == "status":
+            cmd = "git status"
+        elif action == "clone":
+            cmd = f"git clone {repo_url}"
+        elif action == "pull":
+            cmd = f"git pull origin {branch}"
+        elif action == "commit_all":
+            cmd = f'git add . && git commit -m "{message}"'
+        elif action == "push":
+            cmd = f"git push origin {branch}"
+        else:
+            return "Invalid action. Use 'clone', 'pull', 'push', 'commit_all', or 'status'."
+        
+        result = subprocess.run(cmd, shell=True, capture_output=True, text=True, cwd=BASE_DIR)
+        output = result.stdout if result.returncode == 0 else result.stderr
+        return f"Git {action} result:\n{output}"
+    except Exception as e:
+        return f"Error during git {action}: {str(e)}"
+
+@SkillRegistry.register("investigate_codebase")
+def investigate_codebase(directory: str = "."):
+    """Provides a high-level architectural overview of a codebase."""
+    full_path = BASE_DIR / directory
+    if not full_path.exists():
+        return f"Error: Directory '{directory}' not found."
+    
+    try:
+        # 1. List files
+        files = subprocess.getoutput(f"find {full_path} -maxdepth 2 -not -path '*/.*'")
+        
+        # 2. Check for key files (README, package.json, requirements.txt)
+        key_files = []
+        for k in ["README.md", "package.json", "requirements.txt", "pyproject.toml", "main.py", "index.js"]:
+            if (full_path / k).exists():
+                key_files.append(k)
+        
+        # 3. Summarize structure
+        summary = f"Codebase Investigation of '{directory}':\n\n"
+        summary += f"Files found:\n{files}\n\n"
+        summary += f"Key entry points/configs: {', '.join(key_files)}\n"
+        
+        return summary
+    except Exception as e:
+        return f"Error investigating codebase: {str(e)}"
+
+@SkillRegistry.register("switch_model")
+def switch_model(model_name: str):
+    """Changes the current Gemini model (e.g., 'gemini-2.0-flash', 'gemini-1.5-pro')."""
+    try:
+        # We'll set an environment variable that GeminiBrain will respect
+        os.environ["GEMINI_MODEL"] = model_name
+        return f"Successfully switched model to: {model_name}. I will use this for future responses."
+    except Exception as e:
+        return f"Error switching model: {str(e)}"
 
 @SkillRegistry.register("execute_shell_command")
 def execute_shell_command(command: str):
