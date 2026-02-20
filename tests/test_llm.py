@@ -8,9 +8,19 @@ async def test_brain_generate_response(mocker):
     mock_client_class = mocker.patch("src.llm.genai.Client")
     mock_client = mock_client_class.return_value
     
-    # Mock the response
+    # Mock the response structure
+    mock_part = MagicMock()
+    mock_part.text = "Hello, I am Jovibe Agent!"
+    mock_part.function_call = None
+    
+    mock_content = MagicMock()
+    mock_content.parts = [mock_part]
+    
+    mock_candidate = MagicMock()
+    mock_candidate.content = mock_content
+    
     mock_response = MagicMock()
-    mock_response.text = "Hello, I am Jovibe Agent!"
+    mock_response.candidates = [mock_candidate]
     
     # client.aio.models.generate_content is an async call
     mock_client.aio.models.generate_content = AsyncMock(return_value=mock_response)

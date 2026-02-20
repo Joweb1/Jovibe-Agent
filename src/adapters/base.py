@@ -34,6 +34,10 @@ User: {text}
 """
             response = await self.brain.generate_response(prompt)
             
+            if not response:
+                print(f"Warning: Received empty response for user {user_id}")
+                return
+
             # Check if the agent wants to ask a question (STOP_AND_ASK pattern)
             if "STOP_AND_ASK:" in response:
                 clean_question = response.split("STOP_AND_ASK:")[1].strip()

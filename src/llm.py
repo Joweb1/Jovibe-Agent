@@ -241,7 +241,29 @@ class GeminiBrain:
                         model=self._current_model, contents=prompt, config=config
                     )
                     self._consecutive_failures = 0
-                    return response.text
+                    
+                    # NEW SDK HANDLING: Access the first candidate's content
+                    if not response.candidates:
+                        return "Error: No candidates in response."
+                    
+                    candidate = response.candidates[0]
+                    content = candidate.content
+                    
+                    # Handle tool calls if they exist in the response
+                    parts = content.parts
+                    tool_calls = [p.function_call for p in parts if p.function_call]
+                    
+                    if tool_calls:
+                        # Recursive tool execution (simplified for this context)
+                        # The client handles most of this if we use a Chat session, 
+                        # but here we are using generate_content directly.
+                        # For now, let's extract the text and execute tools if needed.
+                        # Or ideally, use the same logic as GCA transport for consistency.
+                        return await self._handle_client_tool_calls(prompt, system_instruction, final_tools, content)
+                    
+                    # Return concatenated text from all text parts
+                    text_parts = [p.text for p in parts if p.text]
+                    return "".join(text_parts) if text_parts else "No text returned."
                 else:
                     result = await self.gca_transport.generate_content(
                         model=self._current_model, prompt=prompt, system_instruction=system_instruction, tools=final_tools
@@ -298,3 +320,63 @@ class GeminiBrain:
             os.environ["GEMINI_MODEL"] = self._current_model
             return True
         return False
+
+    async def _handle_client_tool_calls(self, prompt, system_instruction, tools, initial_content):
+        """Handle recursive tool calling for the native Gemini Client."""
+        messages = [
+            {"role": "user", "parts": [{"text": prompt}]},
+            initial_content
+        ]
+        
+        for turn in range(10):
+            # Extract tool calls from the last message
+            last_content = messages[-1]
+            parts = last_content.parts if hasattr(last_content, "parts") else last_content.get("parts", [])
+            tool_calls = [p.function_call for p in parts if hasattr(p, "function_call") and p.function_call]
+            if not tool_calls:
+                tool_calls = [p.get("functionCall") for p in parts if isinstance(p, dict) and p.get("functionCall")]
+
+            if not tool_calls:
+                text_parts = [p.text for p in parts if hasattr(p, "text") and p.text]
+                if not text_parts:
+                    text_parts = [p.get("text") for p in parts if isinstance(p, dict) and p.get("text")]
+                return "".join(text_parts) if text_parts else "No text returned."
+
+            # Execute tools
+            responses_parts = []
+            for tc in tool_calls:
+                name = tc.name if hasattr(tc, "name") else tc.get("name")
+                args = tc.args if hasattr(tc, "args") else tc.get("args", {})
+                print(f"Executing tool: {name}({args})")
+                try:
+                    result = await self.registry.execute(name, args)
+                except Exception as te:
+                    result = f"Tool Error: {str(te)}"
+                
+                responses_parts.append({
+                    "function_response": {
+                        "name": name,
+                        "response": {"result": str(result)[:3000]}
+                    }
+                })
+            
+            messages.append({"role": "function", "parts": responses_parts})
+            
+            # Send back to Gemini
+            config = {"tools": tools} if tools else {}
+            if system_instruction:
+                config["system_instruction"] = system_instruction
+            
+            # Quota delay
+            await asyncio.sleep(3.0)
+            
+            response = await self.client.aio.models.generate_content(
+                model=self._current_model, contents=messages, config=config
+            )
+            
+            if not response.candidates:
+                return "Error: No candidates in tool-call follow-up."
+            
+            messages.append(response.candidates[0].content)
+
+        return "Error: Maximum tool-call recursion reached."
