@@ -1,5 +1,4 @@
 from src.memory.manager import SoulManager
-import os
 
 def test_soul_manager_system_prompt_default(tmp_path, monkeypatch):
     # Mock BASE_DIR to the temporary path
