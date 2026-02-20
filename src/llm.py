@@ -164,8 +164,8 @@ class CodeAssistTransport:
                             })
                         
                         messages.append({"role": "function", "parts": responses_parts})
-                        # QUOTA PROTECTION: 3 second delay between turns
-                        await asyncio.sleep(3.0)
+                        # QUOTA PROTECTION: 10 second delay between turns
+                        await asyncio.sleep(10.0)
                 except aiohttp.ClientError as ce:
                     raise RuntimeError(f"Network error connecting to GCA: {str(ce)}")
         
@@ -187,7 +187,7 @@ class GeminiBrain:
         self.registry = SkillRegistry()
         self._current_model = os.getenv("GEMINI_MODEL", GEMINI_MODEL)
         self._last_request_time = 0
-        self._throttle_delay = 3.5 
+        self._throttle_delay = 10.0 # 10s delay between tasks
         self._cooldowns = {} 
         self._consecutive_failures = 0
 
@@ -382,7 +382,7 @@ class GeminiBrain:
                 config["system_instruction"] = system_instruction
             
             # Quota delay
-            await asyncio.sleep(3.0)
+            await asyncio.sleep(10.0)
             
             response = await self.client.aio.models.generate_content(
                 model=self._current_model, contents=messages, config=config
