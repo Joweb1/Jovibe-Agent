@@ -39,16 +39,12 @@ def web_search(query: str, num_results: int = 5):
                     link = "https:" + link
                 
                 snippet = snippet_tag.get_text().strip() if snippet_tag else "No snippet available."
-                results.append(f"{i+1}. {title}
-   URL: {link}
-   Snippet: {snippet}")
+                results.append(f"{i+1}. {title}\n   URL: {link}\n   Snippet: {snippet}")
         
         if not results:
             return "No results found for the query."
             
-        return "
-
-".join(results)
+        return "\n\n".join(results)
         
     except Exception as e:
         return f"Error during web search: {str(e)}"
