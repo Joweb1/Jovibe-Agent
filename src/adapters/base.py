@@ -52,5 +52,5 @@ User: {text}
             print(f"Error handling message from {user_id}: {e}")
             try:
                 await self.send_message(user_id, error_msg)
-            except:
+            except Exception:
                 pass # Already logged or network is dead

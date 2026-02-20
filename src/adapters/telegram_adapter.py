@@ -10,6 +10,10 @@ from src.config.settings import TELEGRAM_TOKEN
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+# Silence routine HTTP request logs from dependencies
+logging.getLogger("httpx").setLevel(logging.WARNING)
+logging.getLogger("telegram").setLevel(logging.WARNING)
+
 class TelegramAdapter(BaseAdapter):
     async def run(self):
         if not TELEGRAM_TOKEN:

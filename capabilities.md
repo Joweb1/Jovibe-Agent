@@ -34,8 +34,6 @@ You can switch between these models using `switch_model`:
 3. `gemini-2.5-flash`
 4. `gemini-2.5-pro`
 5. `gemini-2.5-flash-lite`
-6. `gemini-2.0-flash`
-7. `gemini-1.5-flash`
 
 ## Communication
 - **telegram**: Interact with users via Telegram.

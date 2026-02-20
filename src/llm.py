@@ -1,7 +1,6 @@
 import aiohttp
 import asyncio
 import os
-import json
 import uuid
 import time
 import re
@@ -174,9 +173,7 @@ class GeminiBrain:
         "gemini-3-pro-preview",
         "gemini-2.5-flash",
         "gemini-2.5-pro",
-        "gemini-2.5-flash-lite",
-        "gemini-2.0-flash",
-        "gemini-1.5-flash"
+        "gemini-2.5-flash-lite"
     ]
 
     def __init__(self):
@@ -230,13 +227,16 @@ class GeminiBrain:
         for attempt in range(retries):
             if self._current_model in self._cooldowns:
                 if time.time() < self._cooldowns[self._current_model]:
-                    if self._fallback_model(): continue
-                    else: break
+                    if self._fallback_model():
+                        continue
+                    else:
+                        break
 
             try:
                 if self.client:
                     config = {"tools": final_tools} if final_tools else {}
-                    if system_instruction: config["system_instruction"] = system_instruction
+                    if system_instruction:
+                        config["system_instruction"] = system_instruction
                     response = await self.client.aio.models.generate_content(
                         model=self._current_model, contents=prompt, config=config
                     )
@@ -262,14 +262,16 @@ class GeminiBrain:
                         print(f"Waiting {wait_time}s...")
                     if attempt < retries - 1:
                         await asyncio.sleep(wait_time)
-                        if self._fallback_model(): continue
+                        if self._fallback_model():
+                            continue
                     else:
                         return f"Quota reached. (Error: {error_msg})"
                 
                 if "404" in error_msg or "400" in error_msg:
                     print(f"Model {self._current_model} rejected by server. Error: {error_msg[:100]}...")
                     self._cooldowns[self._current_model] = time.time() + 7200 
-                    if self._fallback_model(): continue
+                    if self._fallback_model():
+                        continue
                     break
 
                 if "Network error" in error_msg or "hostname" in error_msg:

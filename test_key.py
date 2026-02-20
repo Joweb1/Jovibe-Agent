@@ -1,5 +1,4 @@
 import google.generativeai as genai
-import sys
 
 def test_api_key(api_key):
     print(f"Testing API Key: {api_key[:8]}...")
