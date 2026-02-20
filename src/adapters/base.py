@@ -21,18 +21,13 @@ class BaseAdapter(ABC):
         """Common logic for handling messages from any channel."""
         try:
             system_prompt = self.soul.get_system_prompt()
-            history = self.soul.get_recent_history(user_id)
+            # Retrieve structured turns for native multi-turn support
+            history_turns = self.soul.get_recent_history_turns(user_id, limit=5)
             
-            prompt = f"""
-{system_prompt}
-
-# RECENT CONTEXT
-{history}
-
-# INCOMING MESSAGE ({channel})
-User: {text}
-"""
-            response = await self.brain.generate_response(prompt)
+            # Construct the final message list
+            messages = history_turns + [{"role": "user", "parts": [{"text": text}]}]
+            
+            response = await self.brain.generate_response(messages, system_instruction=system_prompt)
             
             if not response:
                 print(f"Warning: Received empty response for user {user_id}")

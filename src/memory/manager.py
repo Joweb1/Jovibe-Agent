@@ -63,14 +63,35 @@ Runtime: {runtime_line}
         return default
 
     def log_interaction(self, channel, user_id, prompt, response):
-        interaction = Interaction(
-            channel=channel,
-            user_id=user_id,
-            prompt=prompt,
-            response=response
-        )
-        self.session.add(interaction)
-        self.session.commit()
+        """Log the interaction and ensure the session is properly committed or rolled back."""
+        try:
+            interaction = Interaction(
+                channel=channel,
+                user_id=user_id,
+                prompt=prompt,
+                response=response or "[Empty response]"
+            )
+            self.session.add(interaction)
+            self.session.commit()
+        except Exception as e:
+            print(f"Error logging interaction: {str(e)}")
+            self.session.rollback()
+
+    def get_recent_history_turns(self, user_id, limit=5):
+        """Get recent history as a list of message dictionaries for native Gemini turns."""
+        try:
+            # Ensure we are getting fresh data
+            self.session.expire_all()
+            history = self.session.query(Interaction).filter_by(user_id=user_id).order_by(Interaction.timestamp.desc()).limit(limit).all()
+            
+            turns = []
+            for i in reversed(history):
+                turns.append({"role": "user", "parts": [{"text": i.prompt}]})
+                turns.append({"role": "model", "parts": [{"text": i.response}]})
+            return turns
+        except Exception as e:
+            print(f"Error retrieving history turns: {str(e)}")
+            return []
 
     def get_recent_history(self, user_id, limit=5, max_chars=2000):
         """Get recent history and ensure it doesn't exceed a token/char limit."""

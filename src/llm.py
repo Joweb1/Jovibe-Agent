@@ -9,7 +9,7 @@ from google.auth.transport.requests import Request
 from src.auth import AuthManager
 from src.config.settings import GEMINI_MODEL, GEMINI_API_KEY
 from src.skills.registry import SkillRegistry
-import src.skills.default  # noqa: F401 # Ensure default skills are registered
+import src.skills  # Import the package to trigger __init__.py and load all skills
 
 class CodeAssistTransport:
     """A custom transport to hit the Google Code Assist (GCA) 'free' endpoint."""
@@ -66,13 +66,17 @@ class CodeAssistTransport:
         if not self.project_id:
             await self._onboard(token)
         
-        messages = [{"role": "user", "parts": [{"text": prompt}]}]
+        # Support list-based prompts (turns) or string prompts
+        if isinstance(prompt, list):
+            messages = list(prompt)
+        else:
+            messages = [{"role": "user", "parts": [{"text": prompt}]}]
         
         for turn in range(10): # Increased recursion limit
             # QUOTA PROTECTION: Truncate tool history if it gets too long
-            if len(messages) > 6:
-                # Keep the original prompt [0] and the 4 most recent messages
-                messages = [messages[0]] + messages[-4:]
+            if len(messages) > 10:
+                # Keep the original prompt [0] and the 6 most recent messages
+                messages = [messages[0]] + messages[-6:]
                 print(f"Truncated tool history to stay under quota (Turn {turn})")
 
             current_model = os.getenv("GEMINI_MODEL", model)
@@ -323,23 +327,33 @@ class GeminiBrain:
 
     async def _handle_client_tool_calls(self, prompt, system_instruction, tools, initial_content):
         """Handle recursive tool calling for the native Gemini Client."""
-        messages = [
-            {"role": "user", "parts": [{"text": prompt}]},
-            initial_content
-        ]
+        if isinstance(prompt, list):
+            messages = list(prompt)
+        else:
+            messages = [{"role": "user", "parts": [{"text": prompt}]}]
+        
+        messages.append(initial_content)
         
         for turn in range(10):
             # Extract tool calls from the last message
             last_content = messages[-1]
+            # Handle both object-based (native SDK) and dict-based (GCA) content
             parts = last_content.parts if hasattr(last_content, "parts") else last_content.get("parts", [])
-            tool_calls = [p.function_call for p in parts if hasattr(p, "function_call") and p.function_call]
-            if not tool_calls:
-                tool_calls = [p.get("functionCall") for p in parts if isinstance(p, dict) and p.get("functionCall")]
+            
+            tool_calls = []
+            for p in parts:
+                if hasattr(p, "function_call") and p.function_call:
+                    tool_calls.append(p.function_call)
+                elif isinstance(p, dict) and p.get("functionCall"):
+                    tool_calls.append(p.get("functionCall"))
 
             if not tool_calls:
-                text_parts = [p.text for p in parts if hasattr(p, "text") and p.text]
-                if not text_parts:
-                    text_parts = [p.get("text") for p in parts if isinstance(p, dict) and p.get("text")]
+                text_parts = []
+                for p in parts:
+                    if hasattr(p, "text") and p.text:
+                        text_parts.append(p.text)
+                    elif isinstance(p, dict) and p.get("text"):
+                        text_parts.append(p.get("text"))
                 return "".join(text_parts) if text_parts else "No text returned."
 
             # Execute tools
@@ -360,7 +374,7 @@ class GeminiBrain:
                     }
                 })
             
-            messages.append({"role": "function", "parts": responses_parts})
+            messages.append({"role": "tool", "parts": responses_parts})
             
             # Send back to Gemini
             config = {"tools": tools} if tools else {}
