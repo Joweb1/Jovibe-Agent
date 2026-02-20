@@ -193,14 +193,32 @@ def append_to_heartbeat(task_description: str):
 
 @SkillRegistry.register("fetch_web_page")
 async def fetch_web_page(url: str):
-    """Fetches the text content of a web page given its URL."""
+    """Fetches and cleans the text content of a web page given its URL."""
     try:
-        async with aiohttp.ClientSession() as session:
-            async with session.get(url, timeout=10) as response:
+        headers = {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
+        }
+        async with aiohttp.ClientSession(headers=headers) as session:
+            async with session.get(url, timeout=15) as response:
                 if response.status == 200:
-                    text = await response.text()
-                    # Return first 5000 characters to avoid token limits
-                    return text[:5000]
+                    html = await response.text()
+                    
+                    # Use BeautifulSoup to clean the HTML
+                    from bs4 import BeautifulSoup
+                    soup = BeautifulSoup(html, "html.parser")
+                    
+                    # Remove script and style elements
+                    for script_or_style in soup(["script", "style", "header", "footer", "nav"]):
+                        script_or_style.decompose()
+                    
+                    # Get text and clean up whitespace
+                    text = soup.get_text(separator=" ")
+                    lines = (line.strip() for line in text.splitlines())
+                    chunks = (phrase.strip() for line in lines for phrase in line.split("  "))
+                    clean_text = "\n".join(chunk for chunk in chunks if chunk)
+                    
+                    # Return first 6000 characters (slightly increased limit)
+                    return clean_text[:6000]
                 else:
                     return f"Error: Received status code {response.status}"
     except Exception as e:

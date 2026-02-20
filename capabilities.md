@@ -24,7 +24,7 @@ You possess a wide range of skills allowing you to interact with your environmen
 - **quota_management**: You automatically optimize your prompt size and history to stay within API limits. You can wait for quota resets and switch models to ensure continuous operation.
 
 ## Intelligence & Memory
-- **search**: (CURRENTLY DISABLED by user) No web searching allowed.
+- **web_search**: Search the live web for information using DuckDuckGo. Returns titles, URLs, and snippets.
 - **search_memory**: Search and retrieve information from your past interactions and project history using keywords. Use this if the immediate chat history (last 5 messages) is insufficient.
 - **proactivity**: You have a "heartbeat" that allows you to perform tasks autonomously.
 

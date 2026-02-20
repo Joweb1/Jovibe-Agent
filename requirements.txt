@@ -7,6 +7,7 @@ python-telegram-bot
 discord.py
 pydantic
 aiohttp
+requests
 python-dotenv
 schedule
 psutil
