@@ -9,7 +9,7 @@ from google.auth.transport.requests import Request
 from src.auth import AuthManager
 from src.config.settings import GEMINI_MODEL, GEMINI_API_KEY
 from src.skills.registry import SkillRegistry
-import src.skills  # Import the package to trigger __init__.py and load all skills
+import src.skills  # noqa: F401 # Import the package to trigger __init__.py and load all skills
 
 class CodeAssistTransport:
     """A custom transport to hit the Google Code Assist (GCA) 'free' endpoint."""

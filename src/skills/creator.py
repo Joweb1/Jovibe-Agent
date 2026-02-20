@@ -1,6 +1,4 @@
-import os
 import importlib
-import inspect
 from src.skills.registry import SkillRegistry
 from src.config.settings import BASE_DIR
 
