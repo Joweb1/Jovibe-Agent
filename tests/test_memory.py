@@ -1,25 +1,31 @@
 from src.memory.manager import SoulManager
+import os
 
-def test_soul_manager_system_prompt_default(tmp_path):
-    # We need to monkeypatch the settings or just let it use defaults if files don't exist
+def test_soul_manager_system_prompt_default(tmp_path, monkeypatch):
+    # Mock BASE_DIR to the temporary path
+    monkeypatch.setattr("src.config.settings.BASE_DIR", tmp_path)
+    
     manager = SoulManager()
     prompt = manager.get_system_prompt()
     
+    # Check if the core identity text is in the prompt
     assert "Jovibe Agent" in prompt
-    assert "IDENTITY (SOUL.MD)" in prompt
+    assert "# IDENTITY & PROJECT CONTEXT" in prompt
 
 def test_soul_manager_system_prompt_with_content(tmp_path, monkeypatch):
+    # Mock BASE_DIR to the temporary path
+    monkeypatch.setattr("src.config.settings.BASE_DIR", tmp_path)
+    
     soul_file = tmp_path / "soul.md"
     user_file = tmp_path / "user.md"
     
     soul_file.write_text("Custom Soul Content")
     user_file.write_text("Custom User Context")
     
-    monkeypatch.setattr("src.memory.manager.SOUL_FILE", soul_file)
-    monkeypatch.setattr("src.memory.manager.USER_FILE", user_file)
-    
     manager = SoulManager()
     prompt = manager.get_system_prompt()
     
     assert "Custom Soul Content" in prompt
     assert "Custom User Context" in prompt
+    assert "## soul.md" in prompt
+    assert "## user.md" in prompt
